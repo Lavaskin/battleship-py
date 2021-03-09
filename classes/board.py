@@ -103,8 +103,9 @@ class Board:
 
 	# Detects what do do given other players input
 	# Returns -1 for a duplicate
-	# Returns 1 for a game over (all ships down)
-	# Returns 0 otherwise
+	# Returns  0 for a miss
+	# Returns  1 for a game over (all ships down)
+	# Returns  2 for a hit
 	def placeMove(self, x, y):
 		# Miss
 		if self.board[x][y] == Square.water:
@@ -116,6 +117,7 @@ class Board:
 			self.board[x][y] = Square.hit
 			if self.detectSink(x, y):
 				self.ships -= 1
+				return 2 if self.ships > 0 else 1
 
 			# All ships sunk
 			return 0 if self.ships > 0 else 1
