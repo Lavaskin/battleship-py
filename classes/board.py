@@ -119,9 +119,6 @@ class Board:
 				self.ships -= 1
 				return 2 if self.ships > 0 else 1
 
-			# All ships sunk
-			return 0 if self.ships > 0 else 1
-
 		# Duplicate pick
 		else: return -1
 	#END placeMove()
