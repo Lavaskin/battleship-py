@@ -52,13 +52,16 @@ def drawPlayerIndicator(turn):
 #END drawPlayerIndicator()
 
 # Draws a colored square given coords
-def drawSquare(screen, x, y, width, height, square):
+def drawSquare(screen, x, y, width, height, square, ships):
 	color = (255, 255, 255)
 	# Set color based on square type
 	if square == Square.water:
 		color = (0, 30, 255)
 	elif square == Square.ship:
-		color = (100, 100, 100)
+		if ships:
+			color = (100, 100, 100)
+		else:
+			color = (0, 30, 255)
 	elif square == Square.hit:
 		color = (255, 80, 0)
 	elif square == Square.sunk:
@@ -71,7 +74,7 @@ def drawSquare(screen, x, y, width, height, square):
 #END drawSquare()
 
 # Draws both boards on the screen
-def drawBoards(board1, board2):
+def drawBoards(turn, board1, board2):
 	padding = ((screen.get_width() + screen.get_height()) / 2) * 0.03
 	squareWidth, squareHeight = getSquareDimensions()
 
@@ -81,8 +84,13 @@ def drawBoards(board1, board2):
 	# Draw boards
 	for i in range(0, BOARD_SIZE):
 		for j in range(0, BOARD_SIZE):
-			drawSquare(screen, x, y, squareWidth, squareHeight, board1[i][j])
-			drawSquare(screen, x + xOff, y, squareWidth, squareHeight, board2[i][j])
+			# Only show ships on your own board
+			if turn == 0:
+				drawSquare(screen, x, y, squareWidth, squareHeight, board1[i][j], True)
+				drawSquare(screen, x + xOff, y, squareWidth, squareHeight, board2[i][j], False)
+			elif turn == 1:
+				drawSquare(screen, x, y, squareWidth, squareHeight, board1[i][j], False)
+				drawSquare(screen, x + xOff, y, squareWidth, squareHeight, board2[i][j], True)
 			x += squareWidth
 		y += squareHeight
 		x = padding
@@ -100,7 +108,7 @@ def placeShips(board):
 #END placeShips()
 
 # Returns a tuple of indexes representing which square was clicked
-def coordToSquare(x, y, turn):
+def coordToSquare(turn, x, y):
 	padding = getPadding()
 
 	# Determine indexes by rounding divided coords
@@ -120,7 +128,7 @@ def coordToSquare(x, y, turn):
 # Returns  0 for a miss
 # Returns  1 for a game over (all ships down)
 # Returns  2 for a hit
-def doMove(player, turn):
+def doMove(turn, player):
 	squareWidth, squareHeight = getSquareDimensions()
 	padding = getPadding()
 
@@ -130,7 +138,7 @@ def doMove(player, turn):
 		# Player 2's turn works by clicking on player 1's board
 		if turn == 1:
 			if x > padding and x < (squareWidth * BOARD_SIZE) + padding and y > padding and y < screen.get_height() - padding:
-				i, j = coordToSquare(x, y, turn)
+				i, j = coordToSquare(turn, x, y)
 				return player.placeMove(i, j)
 			else:
 				return -1
@@ -138,7 +146,7 @@ def doMove(player, turn):
 		# Player 1's turn works by clicking on player 2's board
 		else:
 			if x > (padding * 2) + (BOARD_SIZE * squareWidth) and x < screen.get_width() - padding and y > padding and y < screen.get_height() - padding:
-				i, j = coordToSquare(x, y, turn)
+				i, j = coordToSquare(turn, x, y)
 				return player.placeMove(i, j)
 			else:
 				return -1
@@ -157,7 +165,7 @@ def runGame():
 				sys.exit()
 
 		screen.fill((20, 20, 20))
-		drawBoards(p1.board, p2.board)
+		drawBoards(turn, p1.board, p2.board)
 		drawPlayerIndicator(turn)
 
 		# run through game states
@@ -169,14 +177,9 @@ def runGame():
 			# Do a move and verify if the turn increments given the result
 			ret = -1
 			if turn == 0:
-				ret = doMove(p2, turn)
+				ret = doMove(turn, p2)
 			elif turn == 1:
-				ret = doMove(p1, turn)
-			
-			# Returns -1 for a duplicate
-			# Returns  0 for a miss
-			# Returns  1 for a game over (all ships down)
-			# Returns  2 for a hit
+				ret = doMove(turn, p1)
 
 			# Process the result
 			if ret == 0: # Miss
